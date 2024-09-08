@@ -19,8 +19,8 @@ async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
     # Insert seed data
     with SessionLocal() as db:
-        db.execute(insert(models.Document).values(id=1, content=DOCUMENT_1))
-        db.execute(insert(models.Document).values(id=2, content=DOCUMENT_2))
+        db.execute(insert(models.Document).values(id=1, version=1, content=DOCUMENT_1))
+        db.execute(insert(models.Document).values(id=2, version=1, content=DOCUMENT_2))
         db.commit()
     yield
 
@@ -35,22 +35,22 @@ app.add_middleware(
 )
 
 
-@app.get("/document/{document_id}")
+@app.get("/document")
 def get_document(
-    document_id: int, db: Session = Depends(get_db)
+    document_id: int, document_version: int, db: Session = Depends(get_db)
 ) -> schemas.DocumentRead:
     """Get a document from the database"""
-    return db.scalar(select(models.Document).where(models.Document.id == document_id))
+    return db.scalar(select(models.Document).where(models.Document.id == document_id and models.Document.version == document_version))
 
 
-@app.post("/save/{document_id}")
+@app.post("/save")
 def save(
-    document_id: int, document: schemas.DocumentBase, db: Session = Depends(get_db)
+    document_id: int, document_version: int, document: schemas.DocumentBase, db: Session = Depends(get_db)
 ):
     """Save the document to the database"""
     db.execute(
         update(models.Document)
-        .where(models.Document.id == document_id)
+        .where(models.Document.id == document_id and models.Document.version == document_version)
         .values(content=document.content)
     )
     db.commit()

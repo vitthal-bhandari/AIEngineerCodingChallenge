@@ -6,6 +6,7 @@ from app.internal.db import Base
 class Document(Base):
     __tablename__ = "document"
     id = Column(Integer, primary_key=True, index=True)
+    version = Column(Integer, primary_key=True)
     content = Column(String)
 
 

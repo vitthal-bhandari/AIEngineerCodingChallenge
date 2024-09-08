@@ -66,24 +66,32 @@ function App() {
     useState<string>("");
 
   const [currentDocumentId, setCurrentDocumentId] = useState<number>(0);
+  const [currentDocumentVersion, setCurrentDocumentVersion] = useState<number>(0);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Load the first patent on mount
   useEffect(() => {
-    loadPatent(1);
+    loadPatent(1, 1);
   }, []);
 
   // Callback to load a patent from the backend
-  const loadPatent = async (documentNumber: number) => {
+  const loadPatent = async (documentNumber: number, documentVersion: number) => {
     setIsLoading(true);
     console.log("Loading patent:", documentNumber);
     try {
       const response = await axios.get(
-        `${BACKEND_URL}/document/${documentNumber}`
+        `${BACKEND_URL}/document`,
+        {
+          params: {
+            document_id: documentNumber,
+            document_version: documentVersion
+          }
+        }
       );
       setCurrentDocumentContent(response.data.content);
       setCurrentDocumentId(documentNumber);
+      setCurrentDocumentVersion(documentVersion);
     } catch (error) {
       console.error("Error loading document:", error);
     }
@@ -91,12 +99,19 @@ function App() {
   };
 
   // Callback to persist a patent in the DB
-  const savePatent = async (documentNumber: number) => {
+  const savePatent = async (documentNumber: number, documentVersion: number) => {
     setIsLoading(true);
     try {
-      await axios.post(`${BACKEND_URL}/save/${documentNumber}`, {
+      await axios.post(`${BACKEND_URL}/save`, {
         content: currentDocumentContent,
-      });
+      },
+      {
+        params: {
+          document_id: documentNumber,
+          document_version: documentVersion
+        }
+      }
+    );
     } catch (error) {
       console.error("Error saving document:", error);
     }
@@ -111,8 +126,8 @@ function App() {
       </Header>
       <Content>
         <Column>
-          <button onClick={() => loadPatent(1)}>Patent 1</button>
-          <button onClick={() => loadPatent(2)}>Patent 2</button>
+          <button onClick={() => loadPatent(1, 1)}>Patent 1</button>
+          <button onClick={() => loadPatent(2, 1)}>Patent 2</button>
         </Column>
         <Column flex={1}>
           <DocumentTitle>{`Patent ${currentDocumentId}`}</DocumentTitle>
@@ -122,7 +137,7 @@ function App() {
           />
         </Column>
         <Column>
-          <button onClick={() => savePatent(currentDocumentId)}>Save</button>
+          <button onClick={() => savePatent(currentDocumentId, currentDocumentVersion)}>Save</button>
         </Column>
       </Content>
     </Page>

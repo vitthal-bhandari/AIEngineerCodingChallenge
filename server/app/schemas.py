@@ -9,3 +9,4 @@ class DocumentRead(DocumentBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    version: int
