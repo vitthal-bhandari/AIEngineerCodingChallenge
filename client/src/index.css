@@ -44,6 +44,19 @@ button:hover {
   background-color: var(--hover-button-bg-color);
 }
 
+select {
+  margin: 10px;
+  padding: 10px 20px;
+  min-width: 100px;
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+
 /* Additional media query for light mode if needed */
 @media (prefers-color-scheme: light) {
   :root {
@@ -52,4 +65,17 @@ button:hover {
     --button-bg-color: #747bff;
     --hover-button-bg-color: #646cff;
   }
+}
+
+/* New CSS for buttons with opposite styling */
+.opposite-button {
+  background-color: #ffffff;
+  border: 2px solid #747bff;
+  color: #747bff;
+  padding: 10px 20px;
+}
+
+.opposite-button:hover {
+  color: #ffffff;
+  background-color: #747bff;
 }

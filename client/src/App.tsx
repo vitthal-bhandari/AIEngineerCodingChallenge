@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import LoadingOverlay from "./internal/LoadingOverlay";
 import Logo from "./assets/logo.png";
+import { toInteger } from "lodash";
+import { Modal, Typography } from "@mui/material";
 
 const Page = styled.div`
   display: flex;
@@ -59,6 +61,30 @@ const Column = styled.div<ColumnProps>`
   flex: ${(props) => props.flex || "none"};
 `;
 
+const Box = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background-color: white;
+  border: 2px solid #000;
+  box-shadow: 24px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+
+interface MyObject {
+  [index: number]: number; // Or any other type you expect
+}
+
 const BACKEND_URL = "http://localhost:8000";
 
 function App() {
@@ -67,12 +93,16 @@ function App() {
 
   const [currentDocumentId, setCurrentDocumentId] = useState<number>(0);
   const [currentDocumentVersion, setCurrentDocumentVersion] = useState<number>(0);
-
+  const [allDocumentVersions, setAllDocumentVersions] = useState<MyObject>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   // Load the first patent on mount
   useEffect(() => {
     loadPatent(1, 1);
+    getVersions();
   }, []);
 
   // Callback to load a patent from the backend
@@ -118,6 +148,97 @@ function App() {
     setIsLoading(false);
   };
 
+  // Callback to persist a patent in the DB
+  const createNewVersion = async (documentNumber: number, documentVersion: number, version_type: string) => {
+    const newVersionContent = version_type === 'blank' ? "" : currentDocumentContent;
+    setIsLoading(true);
+    try {
+      await axios.post(`${BACKEND_URL}/create_version`, {
+        content: newVersionContent,
+      },
+      {
+        params: {
+          document_id: documentNumber,
+          document_version: documentVersion
+        }
+      }
+    );
+    setCurrentDocumentContent(newVersionContent);
+    setCurrentDocumentId(documentNumber);
+    setCurrentDocumentVersion(documentVersion);
+    getVersions();
+    handleClose();
+    } catch (error) {
+      console.error("Error saving document:", error);
+    }
+    setIsLoading(false);
+  };
+
+  // Callback to load a patent from the backend
+  const getVersions = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${BACKEND_URL}/versions`,
+      );
+      setAllDocumentVersions(response.data);
+    } catch (error) {
+      console.error("Error loading versions:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleIdSelect = (key: string) => {
+    setCurrentDocumentId(toInteger(key))
+  }
+
+  const handleVersionSelect = (key: string) => {
+    setCurrentDocumentVersion(toInteger(key))
+  }
+
+  const findMaxVersion = (data: any, id: number) => {
+    // Get the list of versions for the specified ID
+    const versions = data[id];
+  
+    // If the ID doesn't exist or has no versions, return 0
+    if (!versions || versions.length === 0) {
+      return 0;
+    }
+  
+    // Find the maximum version using the Math.max function
+    const maxVersion = Math.max(...versions);
+  
+    return maxVersion;
+  }
+
+  const ModalComponent = () => {
+    const maxVersion = findMaxVersion(allDocumentVersions, currentDocumentId) + 1
+    return (
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Create new version
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2, mb: 2 }} style={{textAlign: "center"}}>
+            {`You may choose one of the two options below to create v${maxVersion} of your patent draft.`}
+          </Typography>
+          <ModalButtons>
+            <button onClick={() => createNewVersion(currentDocumentId, maxVersion, 'blank')}>Create Blank Draft</button>
+            <button onClick={() => createNewVersion(currentDocumentId, maxVersion, 'copy')}>Copy Existing Draft</button>
+          </ModalButtons>
+        </Box>
+      </Modal>
+    )
+  }
+
+  const getPatent = (id: number, version: number) => {
+    loadPatent(id, version)
+  }
   return (
     <Page>
       {isLoading && <LoadingOverlay />}
@@ -126,8 +247,31 @@ function App() {
       </Header>
       <Content>
         <Column>
-          <button onClick={() => loadPatent(1, 1)}>Patent 1</button>
-          <button onClick={() => loadPatent(2, 1)}>Patent 2</button>
+        <div>
+          <label>Patent</label>
+          <select value={currentDocumentId} onChange={(e) => handleIdSelect(e.target.value)}>
+            <option disabled value="">Patent</option>
+            {allDocumentVersions && Object.keys(allDocumentVersions).map((key: any) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label>Version</label>
+          <select value={currentDocumentVersion} onChange={(e) => handleVersionSelect(e.target.value)}>
+            <option disabled value="">Version</option>
+            {allDocumentVersions && allDocumentVersions[currentDocumentId] && allDocumentVersions[currentDocumentId].map((key: any) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button className="opposite-button" onClick={() => getPatent(currentDocumentId, currentDocumentVersion)}>Get Patent</button>
         </Column>
         <Column flex={1}>
           <DocumentTitle>{`Patent ${currentDocumentId}`}</DocumentTitle>
@@ -137,7 +281,9 @@ function App() {
           />
         </Column>
         <Column>
-          <button onClick={() => savePatent(currentDocumentId, currentDocumentVersion)}>Save</button>
+          <button onClick={() => savePatent(currentDocumentId, currentDocumentVersion)}>Save Changes</button>
+          <button className="opposite-button" onClick={handleOpen}>Create New Version</button>
+          <ModalComponent/>
         </Column>
       </Content>
     </Page>

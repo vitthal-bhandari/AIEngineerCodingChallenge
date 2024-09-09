@@ -1,6 +1,5 @@
 from pydantic import BaseModel, ConfigDict
 
-
 class DocumentBase(BaseModel):
     content: str
 

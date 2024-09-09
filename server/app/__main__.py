@@ -21,6 +21,8 @@ async def lifespan(_: FastAPI):
     with SessionLocal() as db:
         db.execute(insert(models.Document).values(id=1, version=1, content=DOCUMENT_1))
         db.execute(insert(models.Document).values(id=2, version=1, content=DOCUMENT_2))
+        db.execute(insert(models.Document).values(id=2, version=2, content=DOCUMENT_2))
+        db.execute(insert(models.Document).values(id=2, version=3, content=DOCUMENT_2))
         db.commit()
     yield
 
@@ -40,7 +42,7 @@ def get_document(
     document_id: int, document_version: int, db: Session = Depends(get_db)
 ) -> schemas.DocumentRead:
     """Get a document from the database"""
-    return db.scalar(select(models.Document).where(models.Document.id == document_id and models.Document.version == document_version))
+    return db.scalar(select(models.Document).where(models.Document.id == document_id).where(models.Document.version == document_version))
 
 
 @app.post("/save")
@@ -50,12 +52,41 @@ def save(
     """Save the document to the database"""
     db.execute(
         update(models.Document)
-        .where(models.Document.id == document_id and models.Document.version == document_version)
+        .where(models.Document.id == document_id)
+        .where(models.Document.version == document_version)
         .values(content=document.content)
     )
     db.commit()
     return {"document_id": document_id, "content": document.content}
 
+@app.get("/versions")
+def get_versions(
+    db: Session = Depends(get_db)
+):
+    """Get all versions of all documents from the database"""
+    results = db.execute(select(models.Document.id, models.Document.version)
+    )
+    # Initialize an empty dictionary to store versions
+    all_versions = {}
+
+    # Loop through each row and build the nested dictionary
+    for row in results:
+        document_id, version = row
+        if document_id not in all_versions:
+            all_versions[document_id] = []
+        all_versions[document_id].append(version)
+
+    return all_versions
+
+@app.post("/create_version")
+def create_version(
+    document_id: int, document_version: int, document: schemas.DocumentBase, db: Session = Depends(get_db)
+):
+    """Save the new document to the database"""
+    db_document = models.Document(id = document_id, version = document_version, content=document.content)
+    db.add(db_document)
+    db.commit()
+    return {"document_id": document_id, "content": document.content}
 
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket, ai: AI = Depends(get_ai)):
