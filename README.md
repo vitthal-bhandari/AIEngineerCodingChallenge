@@ -2,6 +2,17 @@
 
 # Solve Intelligence AI Engineer Challenge
 
+This is a project built with the following tech stack:
+
+ - Frontend
+	 - React+Vite framework
+	 - Typescript
+	 - Material UI (for UI components)
+ - Backend
+	 - FastAPI + SQLite DB
+ - Design Inspiration
+	 - Grammarly (for auto-suggestions)
+
 ## Objective
 
 The objective of this challenge was to accomplish 3 primary tasks - 
@@ -42,7 +53,7 @@ I have implemented the concept of **versioning**. Users now have:
 The following changes have been made to the starter code:
 |Frontend|Backend  |
 |--|--|
-| A dropdown for both - Patent and Version is available now | DB schema is changed and a new column "version" is introduced. Columns "id" and "version" together serve as the joint primary key for the table |
+| A dropdown for both - Patent and Version is available now (by default few versions have been pre-filled into the DB for both patents 1 and 2) | DB schema is changed and a new column "version" is introduced. Columns "id" and "version" together serve as the joint primary key for the table |
 | Clicking on the **Get Patent** button fetches the patent from the backend | Changes to the fetch and save APIs have been made based on the new version column |
 | A button to **Create New Version** is available now on the right side | 2 new API endpoints to fetch all versions and create a new version are also exposed |
 | User has two ways of creating a new version - create a blank draft, or copy the existing draft |  |
@@ -72,15 +83,18 @@ The following changes have been made to the starter code:
 
 ## Task 3: Adding additional AI functionality
 
-Implement an additional AI-based feature or product improvement that would benefit our customers as they draft their patent applications.
+I have added an additional functionality of giving the user the ability to stream the AI-powered suggestions directly into the draft.
 
-This last part is open-ended, and you can take it in any direction you like. We’re interested in seeing how you come up with and implement AI-based approaches without us directing you.
+The following changes have been made to the starter code:
+|Frontend|Backend  |
+|--|--|
+| For each suggestion, user has the option to either resolve (i.e. incorporate) or ignore (i.e. discard) that particular suggestion | Resolving a suggestions triggers a call to another websocket endpoint which is responsible for fetching the response from the AI model |
+| If resolved, the modified draft with the suggestion replaces the old draft | A separate prompt has been written which asks the model to incorporate the suggestion into the document and return the modified document |
+![enter image description here](https://github.com/vitthal-bhandari/AIEngineerCodingChallenge/blob/master/assets/resolve_suggestions.png)
 
-Some ideas:
-- Generate technical drawings (e.g. flowcharts, system diagrams, device diagrams, etc.) based on the claims.
-- Have the user ask the AI to make an update to the application, and have the AI stream this update directly into the editor.
-- Extend task 2 by having the AI incorporate its suggestions directly into the editor.
+## Shortcomings
 
-Or anything else you like.
+Certain features could benefit with more availability of time - 
 
-Enjoy!
+ 1. The suto-suggestion reoslution feature is inconsistent and doesn't always give the correct results. This could be primarily due to poor prompt tuning. Perhaps better prompt can be used for generating correct response. 
+ 2. During incorporation of suggestions into the draft, corresponding section/paragraph could be highlighted for better visualization.
