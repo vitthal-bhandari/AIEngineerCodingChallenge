@@ -132,6 +132,12 @@ function App() {
     handleCardDelete(suggestion)
   }
 
+const ignoreAiSuggestion = (suggestion: string) => {
+  setMessageHistory((prevCards) =>
+    prevCards.filter((card) => card['suggestion'] !== suggestion)
+  );
+}
+
   // Load the first patent on mount
   useEffect(() => {
     loadPatent(1, 1);
@@ -295,7 +301,6 @@ function App() {
   }
 
   const handleCardDelete = (suggestion: string) => {
-    console.log(messageHistory)
     setMessageHistory((prevCards) =>
       prevCards.filter((card) => card['suggestion'] !== suggestion)
     );
@@ -355,6 +360,7 @@ function App() {
             key={index}   
             obj={obj}
             resolveAiSuggestion={resolveAiSuggestion}
+            ignoreAiSuggestion={ignoreAiSuggestion}
             />
           )))}
           <ModalComponent/>

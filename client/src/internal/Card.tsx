@@ -36,9 +36,10 @@ const bull = (
 export interface CardProps {
         obj: any;
         resolveAiSuggestion: (paragraph: number, suggestion: string) => void;
+        ignoreAiSuggestion: (suggestion: string) => void;
     }
 
-export default function BasicCard({obj, resolveAiSuggestion}: CardProps) {
+export default function BasicCard({obj, resolveAiSuggestion, ignoreAiSuggestion}: CardProps) {
 
     const ColoredChip = (severity: any) => {
         const barColor= (severity['severity']==='high') ? 'error' : (severity['severity']==='medium' ? 'warning' : 'info')
@@ -66,7 +67,7 @@ export default function BasicCard({obj, resolveAiSuggestion}: CardProps) {
         </CardContent>
         <CardActions sx={{display: 'flex', justifyContent: 'space-around'}}>
             <StyledButton size="small" onClick={() => {resolveAiSuggestion(obj['paragraph'], obj['suggestion']);}}>RESOLVE</StyledButton>
-            <StyledIgnoreButton size="small">IGNORE</StyledIgnoreButton>
+            <StyledIgnoreButton size="small" onClick={() => {ignoreAiSuggestion(obj['suggestion']);}}>IGNORE</StyledIgnoreButton>
         </CardActions>
         </Card>
     );
