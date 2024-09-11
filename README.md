@@ -90,6 +90,7 @@ The following changes have been made to the starter code:
 |--|--|
 | For each suggestion, user has the option to either resolve (i.e. incorporate) or ignore (i.e. discard) that particular suggestion | Resolving a suggestions triggers a call to another websocket endpoint which is responsible for fetching the response from the AI model |
 | If resolved, the modified draft with the suggestion replaces the old draft | A separate prompt has been written which asks the model to incorporate the suggestion into the document and return the modified document |
+
 ![enter image description here](https://github.com/vitthal-bhandari/AIEngineerCodingChallenge/blob/master/assets/resolve_suggestions.png)
 
 ## Shortcomings
