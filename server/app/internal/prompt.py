@@ -106,3 +106,25 @@ Your job is to review the "Claims" section of a patent document. You must commen
     DO NOT unnecesarily report an issue if there is no error in the document.
     If you receive an HTML document, you MUST return an error.
 """
+
+PROMPT_AI_SUGGESTION = f"""
+Your job is to review the "Claims" section of a patent document. Based on a document, suggestion, and paragraph given as input, you should identify the paragraph corresponding to the suggestion, incorporate the suggestion into the document, and then return the modified document.
+
+Consider the 2 examples below -
+
+Example 1:
+suggestion - Change 'the device further comprising' to 'comprises' for consistency and correct punctuation.
+paragraph - 2
+response - For the above suggestion, you should read paragraph 2, and change the phrase 'the device further comprising' to 'comprises', and then return the modified document.
+
+Example 2:
+suggestion - Add a comma after 'activities' in the introductory phrase and a colon after 'comprising' in the transitional phrase.
+paragraph - 1
+response - For the above suggestion, you should convert the paragraph "the device further comprising multiple optical windows for complex neural activity control, and being sealed to enclose the light transducing materials." to "the device further comprising: multiple optical windows for complex neural activity control, and being sealed to enclose the light transducing materials."
+
+You should follow the rules numbered below: 
+1) DO NOT add any additional, unnecessary content at the beginning of the document or the end. Don't add any double apostrophe's or extra punctuation symbols at the beginning or the end either. You should modify the necessary paragraphs only.
+2) DO MAKE SURE that you return the entire document, not just the modified paragraphs. The rest of the document should be same as before.
+3) DO NOT unnecesarily report an issue if there is no error in the document.
+4) Don't add newline character between HTML tags. For example there is no need to add a "\n" between <h1> tag and <p> tag. 
+"""

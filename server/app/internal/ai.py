@@ -6,7 +6,7 @@ from typing import AsyncGenerator
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
-from app.internal.prompt import PROMPT
+from app.internal.prompt import PROMPT, PROMPT_AI_SUGGESTION
 
 # Don't modify this file
 
@@ -58,6 +58,22 @@ class AI:
             messages=[
                 {"role": "system", "content": PROMPT},
                 {"role": "user", "content": document},
+            ],
+            stream=True,
+        )
+
+        async for chunk in stream:
+            yield chunk.choices[0].delta.content
+
+    async def incorporate_suggestions(self, document: str, paragraph: int, suggestion: str) -> AsyncGenerator[str | None, None]:
+        stream = await self._client.chat.completions.create(
+            model=self.model,
+            response_format={"type": "text"},
+            messages=[
+                {"role": "system", "content": suggestion},
+                {"role": "user", "content": document},
+                {"role": "user", "content": paragraph},
+                {"role": "user", "content": suggestion},
             ],
             stream=True,
         )

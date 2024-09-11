@@ -5,7 +5,9 @@ import axios from "axios";
 import LoadingOverlay from "./internal/LoadingOverlay";
 import Logo from "./assets/logo.png";
 import { toInteger } from "lodash";
-import { Modal, Typography } from "@mui/material";
+import { CircularProgress, Modal, Typography } from "@mui/material";
+import BasicCard from "./internal/Card";
+import useWebSocket from "react-use-websocket";
 
 const Page = styled.div`
   display: flex;
@@ -37,7 +39,6 @@ const DocumentTitle = styled.h2`
 
 const Content = styled.div`
   display: flex;
-  height: calc(100% - 100px);
   flex-direction: row;
   gap: 20px;
   justify-content: center;
@@ -86,6 +87,7 @@ interface MyObject {
 }
 
 const BACKEND_URL = "http://localhost:8000";
+const SOCKET_URL = "ws://localhost:8000/ws_ai_sugg";
 
 function App() {
   const [currentDocumentContent, setCurrentDocumentContent] =
@@ -94,10 +96,41 @@ function App() {
   const [currentDocumentId, setCurrentDocumentId] = useState<number>(0);
   const [currentDocumentVersion, setCurrentDocumentVersion] = useState<number>(0);
   const [allDocumentVersions, setAllDocumentVersions] = useState<MyObject>({});
+  const [messageHistory, setMessageHistory] = useState<MessageEvent[]>([]);
+  const [documentHistory, setDocumentHistory] = useState<MessageEvent[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const { sendMessage, lastMessage } = useWebSocket(SOCKET_URL, {
+    onOpen: () => console.log("WebSocket Connected"),
+    onClose: () => console.log("WebSocket Disconnected"),
+    shouldReconnect: (_closeEvent: any) => true,
+    // Optionally, you can configure WebSocket options here
+  });
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      setDocumentHistory(lastMessage.data);
+      setCurrentDocumentContent(lastMessage.data);
+      // Handle the incoming message as needed. For example, update the editor content or display suggestions.;
+      setIsLoading(false);
+    }
+  }, [lastMessage, setDocumentHistory]);
+
+  // Debounce editor content changes
+  const resolveAiSuggestion = (paragraph: number, suggestion: string) => {
+    setIsLoading(true);
+    const content = {
+      "document": currentDocumentContent,
+      paragraph,
+      suggestion
+    }
+    sendMessage(JSON.stringify(content));
+    handleCardDelete(suggestion)
+  }
 
   // Load the first patent on mount
   useEffect(() => {
@@ -166,6 +199,7 @@ function App() {
     setCurrentDocumentContent(newVersionContent);
     setCurrentDocumentId(documentNumber);
     setCurrentDocumentVersion(documentVersion);
+    setMessageHistory([]);
     getVersions();
     handleClose();
     } catch (error) {
@@ -238,7 +272,35 @@ function App() {
 
   const getPatent = (id: number, version: number) => {
     loadPatent(id, version)
+    setMessageHistory([]);
   }
+
+  const GradientCircularProgress = () => {
+    return (
+      <>
+        <svg width={0} height={0}>
+          <defs>
+            <linearGradient id="my_gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#e01cd5" />
+              <stop offset="100%" stopColor="#1CB5E0" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <CircularProgress sx={{ 'svg circle': { stroke: 'url(#my_gradient)' } }} />
+        <Typography variant="body2">
+            Loading AI-powered suggestions for you
+        </Typography>
+      </>
+    );
+  }
+
+  const handleCardDelete = (suggestion: string) => {
+    console.log(messageHistory)
+    setMessageHistory((prevCards) =>
+      prevCards.filter((card) => card['suggestion'] !== suggestion)
+    );
+  };
+  
   return (
     <Page>
       {isLoading && <LoadingOverlay />}
@@ -250,9 +312,8 @@ function App() {
         <div>
           <label>Patent</label>
           <select value={currentDocumentId} onChange={(e) => handleIdSelect(e.target.value)}>
-            <option disabled value="">Patent</option>
             {allDocumentVersions && Object.keys(allDocumentVersions).map((key: any) => (
-              <option key={key} value={key}>
+              <option className="opposite-button" key={key} value={key}>
                 {key}
               </option>
             ))}
@@ -262,9 +323,8 @@ function App() {
         <div>
           <label>Version</label>
           <select value={currentDocumentVersion} onChange={(e) => handleVersionSelect(e.target.value)}>
-            <option disabled value="">Version</option>
             {allDocumentVersions && allDocumentVersions[currentDocumentId] && allDocumentVersions[currentDocumentId].map((key: any) => (
-              <option key={key} value={key}>
+              <option className="opposite-button" key={key} value={key}>
                 {key}
               </option>
             ))}
@@ -273,16 +333,30 @@ function App() {
 
         <button className="opposite-button" onClick={() => getPatent(currentDocumentId, currentDocumentVersion)}>Get Patent</button>
         </Column>
-        <Column flex={1}>
+
+        <Column flex={4}>
           <DocumentTitle>{`Patent ${currentDocumentId}`}</DocumentTitle>
           <Document
             onContentChange={setCurrentDocumentContent}
             content={currentDocumentContent}
+            setMessageHistory={setMessageHistory}
+            setIsAiLoading={setIsAiLoading}
           />
         </Column>
+
         <Column>
-          <button onClick={() => savePatent(currentDocumentId, currentDocumentVersion)}>Save Changes</button>
+          <button id="saveButton" onClick={() => savePatent(currentDocumentId, currentDocumentVersion)}>Save Changes</button>
           <button className="opposite-button" onClick={handleOpen}>Create New Version</button>
+          {isAiLoading ?
+          <GradientCircularProgress/>
+          :
+          (messageHistory && messageHistory.map((obj: any, index: number) => (
+            <BasicCard    
+            key={index}   
+            obj={obj}
+            resolveAiSuggestion={resolveAiSuggestion}
+            />
+          )))}
           <ModalComponent/>
         </Column>
       </Content>

@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import json
 
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -100,6 +101,50 @@ async def websocket(websocket: WebSocket, ai: AI = Depends(get_ai)):
             """
             document = await websocket.receive_text()
             print("Received data via websocket")
+
+            paragraph = document.strip()  # Remove leading and trailing whitespace
+
+            # Process the paragraph using the AI model
+            suggestions = ai.review_document(paragraph)
+            print("Received suggestions")
+            response=''
+            # Send the suggestions back to the client
+            async for suggestion in suggestions:
+                if suggestion:
+                    response+=suggestion
+            await websocket.send_json(response)
+
+        except WebSocketDisconnect:
+            break
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            continue
+
+
+@app.websocket("/ws_ai_sugg")
+async def websocket_ai_sugg(websocket: WebSocket, ai: AI = Depends(get_ai)):
+    await websocket.accept()
+    while True:
+        try:
+
+            json_data = await websocket.receive_text()
+            python_dict = json.loads(json_data)
+            document, paragraph, suggestion = python_dict["document"], python_dict["paragraph"], python_dict["suggestion"]
+            print("Received data via websocket")
+
+            paragraph = document.strip()  # Remove leading and trailing whitespace
+
+            # Process the paragraph using the AI model
+            suggestions = ai.incorporate_suggestions(document, paragraph, suggestion)
+            print("Received suggestions")
+            response=''
+            # Send the suggestions back to the client
+            async for suggestion in suggestions:
+                if suggestion:
+
+                    response+=suggestion
+            await websocket.send_json(response)
+
         except WebSocketDisconnect:
             break
         except Exception as e:
