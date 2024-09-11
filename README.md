@@ -1,4 +1,5 @@
 
+
 # Solve Intelligence AI Engineer Challenge
 
 ## Objective
@@ -53,15 +54,21 @@ The following changes have been made to the starter code:
 
 ## Task 2: Incorporating Real-Time AI Suggestions
 
-Your colleague started some work on integrating real-time improvement suggestions for your users. However, they only had time to set up a WebSocket connection. It is your job to finish it.
 
-You will find a WebSocket endpoint that needs to be completed in the `app/__main__.py` file in the `server`. This endpoint should receive the editor contents from the client and stream out AI suggestions to the UI. There are a few complications here:
+A real-time AI suggestive functionality is implementedto assist users with patent writing. Users now have:
+1. The ability to view suggestions given by an AI model in real-time
+2. The ability to have suggestions generated after every change of the draft
 
-- You are using a third party AI library, which exposes a fairly poor API. The code for this library is in `server/app/internal/ai.py`.
-  - The API expects a **plain** text document, with no HTML mark-up or formatting
-  - There are intermittent errors in the formatting of the JSON output
+The following changes have been made to the starter code:
+|Frontend|Backend  |
+|--|--|
+| On the event of draft change, AI powered auto-suggestions are triggered | Draft content is converted to plain text from html markup and sent to the websocket endpoint |
+| All suggestions are shown in separate cards along with their description, type, and severity level (highlighted in tiny chips) | websocket endpoint fetches the suggestions asynchronously and send them back to the UI |
+| Suggestions are flushed when user changes the draft again, switches to a different draft/version, or refreshes the page | JSON response is parsed and displayed on the UI |
 
-You will need to find some way of notifying the user of the suggestions generated. As we don't want the user's experience to be impacted, this should be a background process. You can find the existing frontend WebSocket code in `client/src/Document.tsx`.
+![enter image description here](https://github.com/vitthal-bhandari/AIEngineerCodingChallenge/blob/master/assets/loading_suggestions.png)
+
+![enter image description here](https://github.com/vitthal-bhandari/AIEngineerCodingChallenge/blob/master/assets/ai_suggestions.png)
 
 ## Task 3: Adding additional AI functionality
 
