@@ -1,30 +1,57 @@
+
 # Solve Intelligence AI Engineer Challenge
 
 ## Objective
 
-You have received a mock-up of a patent reviewing application from a junior colleague. Unfortunately, it is incomplete and needs additional work. Your job is to take your colleague's work, improve and extend it, and add a feature of your own creation!
+The objective of this challenge was to accomplish 3 primary tasks - 
+1. Implementing Document Versioning
+2. Incorporating Real-Time AI Suggestions
+3. Adding additional AI functionality
 
-## Docker
+## Setup
 
-Make sure you create a .env file (see .env.example) with the OpenAI API key we have provided.
+Make sure you create a .env file with a valid OpenAI API key. 
+There are 2 ways of running the application -
 
-To build and run the application using Docker, execute the following command:
-
-```
-docker-compose up --build
-```
-
+ 1. To build and run the application using Docker, execute the following command:
+	```
+	docker-compose up --build
+	```
+ 2. To manually start the services in your terminal, follow the steps below:
+	 1. start the client service in a terminal by running the commands below:
+		```
+		cd ./client
+		npm install
+		npm run dev
+		```
+	2. start the server in another terminal by running the commands below:
+		```
+		cd ./server
+		pip install -r requirements.txt
+		python -m uvicorn app.__main__:app --host 0.0.0.0 --reload
+		```
+		It's suggested to activate a virtual environment before installing all python dependencies.
 ## Task 1: Implement Document Versioning
 
-Currently, the user can save a document, but there is no concept of **versioning**. Paying customers have expressed an interest in this and have requested the following:
-
+I have implemented the concept of **versioning**. Users now have:
 1. The ability to create new versions
 2. The ability to switch between existing versions
 3. The ability to make changes to any of the existing versions and save those changes (without creating a new version)
 
-You will need to modify the database model (`app/models.py`), add some API routes (`app/__main__.py`), and update the client-side code accordingly.
+The following changes have been made to the starter code:
+|Frontend|Backend  |
+|--|--|
+| A dropdown for both - Patent and Version is available now | DB schema is changed and a new column "version" is introduced. Columns "id" and "version" together serve as the joint primary key for the table |
+| Clicking on the **Get Patent** button fetches the patent from the backend | Changes to the fetch and save APIs have been made based on the new version column |
+| A button to **Create New Version** is available now on the right side | 2 new API endpoints to fetch all versions and create a new version are also exposed |
+| User has two ways of creating a new version - create a blank draft, or copy the existing draft |  |
 
-## Task 2: Real-Time AI Suggestions
+![screenshot of new version creation](https://github.com/vitthal-bhandari/AIEngineerCodingChallenge/blob/master/assets/versioning.png)
+
+![screenshot of version control system](https://github.com/vitthal-bhandari/AIEngineerCodingChallenge/blob/master/assets/create_new_version.png)
+
+
+## Task 2: Incorporating Real-Time AI Suggestions
 
 Your colleague started some work on integrating real-time improvement suggestions for your users. However, they only had time to set up a WebSocket connection. It is your job to finish it.
 
@@ -36,7 +63,7 @@ You will find a WebSocket endpoint that needs to be completed in the `app/__main
 
 You will need to find some way of notifying the user of the suggestions generated. As we don't want the user's experience to be impacted, this should be a background process. You can find the existing frontend WebSocket code in `client/src/Document.tsx`.
 
-## Task 3: Showcase your AI Skills
+## Task 3: Adding additional AI functionality
 
 Implement an additional AI-based feature or product improvement that would benefit our customers as they draft their patent applications.
 
