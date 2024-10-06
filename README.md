@@ -1,6 +1,6 @@
 
 
-# Solve Intelligence AI Engineer Challenge
+# AI Engineer Challenge
 
 This is a project built with the following tech stack:
 
